@@ -1,0 +1,53 @@
+chores = ['naczynia', 'łazienka', 'odkurzanie', 'spacer z psem']
+randomChore = random.choice(chores)
+chores.remove(randomChore) # ten obowiązek jest teraz zajęty, więc usuń go
+
+
+import random
+import smtplib
+
+# Lista adresów e-mail i obowiązków
+emails = ['jan@example.com', 'anna@example.com', 'tomek@example.com', 'ewa@example.com']
+chores = ['naczynia', 'łazienka', 'odkurzanie', 'spacer z psem']
+
+# Przechowuje poprzednie przydziały (w prawdziwej aplikacji może być przechowywane w pliku)
+previous_assignments = {}
+
+# Przypisz obowiązki losowo
+assignments = {}
+
+for email in emails:
+    available_chores = [chore for chore in chores if chore != previous_assignments.get(email)]
+    if not available_chores:  # Jeśli nie ma dostępnych obowiązków, użyj całej listy
+        available_chores = chores.copy()
+    randomChore = random.choice(available_chores)
+    assignments[email] = randomChore
+    chores.remove(randomChore)
+    previous_assignments[email] = randomChore
+
+# Wyślij e-maile z przypisanymi obowiązkami
+smtpObj = smtplib.SMTP('smtp.example.com', 587)
+smtpObj.ehlo()
+smtpObj.starttls()
+smtpObj.login('moj_email@example.com', 'haslo')
+
+for email, chore in assignments.items():
+    body = f"Subject: Twój obowiązek domowy na ten tydzień\n\nTwój obowiązek to: {chore}. Proszę, wykonaj go w tym tygodniu!"
+    smtpObj.sendmail('moj_email@example.com', email, body)
+
+smtpObj.quit()
+
+print("Wszystkie e-maile zostały wysłane!")
+
+#Jak to działa:
+#Importowanie modułów: Najpierw importujemy potrzebne moduły: random do losowego wyboru obowiązków oraz smtplib do wysyłania e-maili.
+
+#Definiowanie list: Tworzymy listy adresów e-mail (emails) oraz obowiązków (chores).
+
+#Przechowywanie poprzednich przydziałów: Używamy słownika previous_assignments, aby zapisać poprzednie przydziały obowiązków dla każdego adresu e-mail. W prawdziwej aplikacji, można to przechowywać w pliku.
+
+#Losowe przypisywanie obowiązków: Dla każdego adresu e-mail losowo wybieramy dostępny obowiązek, który nie był przypisany ostatnim razem, a następnie zapisujemy to przypisanie i usuwamy obowiązek z listy dostępnych obowiązków.
+
+#Wysyłanie e-maili: Tworzymy połączenie z serwerem SMTP, logujemy się i wysyłamy e-maile z przypisanymi obowiązkami do każdej osoby.
+
+#Zamykanie połączenia: Po wysłaniu wszystkich e-maili zamykamy połączenie z serwerem SMTP.
