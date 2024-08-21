@@ -1,0 +1,44 @@
+import requests
+from twilio.rest import Client
+
+# Konfiguracja Twilio
+accountSID = 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+authToken = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+myNumber = '+15559998888'
+twilioNumber = '+15552225678'
+
+# URL do pobrania danych pogodowych
+weather_url = 'https://api.weather.gov/gridpoints/MLB/25,69/forecast'
+
+# Pobierz dane pogodowe
+response = requests.get(weather_url)
+response.raise_for_status()
+weather_data = response.json()
+
+# Sprawdź, czy dzisiaj będzie padać
+today_forecast = weather_data['properties']['periods'][0]
+if 'rain' in today_forecast['detailedForecast'].lower() or 'showers' in today_forecast['detailedForecast'].lower():
+    # Jeśli będzie padać, wyślij SMS-a z przypomnieniem
+    client = Client(accountSID, authToken)
+    message = client.messages.create(
+        body='Przypomnienie: Dzisiaj będzie padać. Nie zapomnij zabrać parasola!',
+        from_=twilioNumber,
+        to=myNumber
+    )
+    print(f"Wysłano wiadomość: {message.sid}")
+else:
+    print("Dzisiaj nie będzie padać. Nie musisz brać parasola.")
+
+
+#Jak to działa:
+#Importowanie modułów: Importujemy moduły requests do pobierania danych pogodowych i twilio.rest do wysyłania SMS-ów.
+
+#Konfiguracja Twilio: Ustawiamy accountSID, authToken, numer telefonu nadawcy (twilioNumber) oraz numer telefonu odbiorcy (myNumber).
+
+#Pobieranie danych pogodowych: Wysyłamy zapytanie HTTP do API pogodowego z użyciem requests.get() i sprawdzamy, czy zapytanie zakończyło się sukcesem. Następnie konwertujemy odpowiedź na format JSON.
+
+#Sprawdzanie prognozy: Analizujemy szczegółową prognozę na dzisiaj (today_forecast) i sprawdzamy, czy w prognozie znajduje się słowo rain (deszcz) lub showers (przelotne opady).
+
+#Wysyłanie SMS-a: Jeśli w prognozie przewidywany jest deszcz, tworzymy klienta Twilio i wysyłamy SMS-a z przypomnieniem o zabraniu parasola.
+
+#Wyświetlanie informacji: W zależności od prognozy, drukujemy komunikat, czy SMS został wysłany, lub że parasol nie jest potrzebny.
