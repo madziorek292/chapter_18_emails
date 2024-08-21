@@ -1,0 +1,54 @@
+#Projekt: Wysyłanie przypomnień o opłaceniu składek członkowskich
+
+#Załóżmy, że zostałeś „wolontariuszem” do śledzenia składek członkowskich w Klubie Obowiązkowego Wolontariatu. To naprawdę nudna praca, polegająca na utrzymywaniu arkusza kalkulacyjnego, w którym zapisywane są wpłaty każdego członka, oraz wysyłaniu przypomnień do tych, którzy jeszcze nie opłacili składek. Zamiast samodzielnie przeglądać arkusz kalkulacyjny i kopiować oraz wklejać te same wiadomości do osób, które są zaległe z opłatami, napiszemy skrypt, który zrobi to za Ciebie.
+
+#Co Twój program będzie robił:
+#Odczytuje dane z arkusza Excel.
+#Znajduje wszystkich członków, którzy nie opłacili składek za ostatni miesiąc.
+#Znajduje ich adresy e-mail i wysyła im spersonalizowane przypomnienia.
+#Twój kod będzie musiał:
+#Otworzyć i odczytać komórki dokumentu Excel za pomocą modułu openpyxl.
+#Stworzyć słownik członków zalegających z opłatami.
+#Zalogować się do serwera SMTP.
+#Wysłać spersonalizowane przypomnienia e-mail do wszystkich członków zalegających z opłatami.
+
+! python3
+# sendDuesReminders.py - Wysyła e-maile na podstawie statusu płatności w arkuszu kalkulacyjnym.
+import openpyxl, smtplib, sys
+
+# Otwórz arkusz kalkulacyjny i uzyskaj najnowszy status składek.
+wb = openpyxl.load_workbook('duesRecords.xlsx')
+sheet = wb['Sheet1']
+lastCol = sheet.max_column
+latestMonth = sheet.cell(row=1, column=lastCol).value
+
+# Sprawdź status płatności każdego członka.
+unpaidMembers = {}
+for r in range(2, sheet.max_row + 1):
+    payment = sheet.cell(row=r, column=lastCol).value
+    if payment != 'paid':
+        name = sheet.cell(row=r, column=1).value
+        email = sheet.cell(row=r, column=2).value
+        unpaidMembers[name] = email
+
+# Zaloguj się na konto e-mail.
+smtpObj = smtplib.SMTP('smtp.example.com', 587)
+smtpObj.ehlo()
+smtpObj.starttls()
+smtpObj.login('moj_email@example.com', sys.argv[1])
+
+# Wyślij przypomnienia e-mail.
+for name, email in unpaidMembers.items():
+    body = f"Subject: {latestMonth} zaległe składki.\nDrogi {name},\nZgodnie z naszymi zapisami nie opłaciłeś składki za {latestMonth}. Prosimy o jak najszybszą wpłatę. Dziękujemy!"
+    print(f'Wysyłam e-mail do {email}...')
+    sendmailStatus = smtpObj.sendmail('moj_email@example.com', email, body)
+    if sendmailStatus != {}:
+        print(f'Wystąpił problem z wysłaniem e-maila do {email}: {sendmailStatus}')
+
+smtpObj.quit()
+
+#Jak to działa?
+#Otwiera arkusz Excel duesRecords.xlsx i ustala kolumnę odpowiadającą za najnowszy miesiąc.
+#Przegląda każdy wiersz arkusza, aby sprawdzić, czy członek opłacił składkę w ostatnim miesiącu. Jeśli nie, dodaje imię i adres e-mail członka do słownika unpaidMembers.
+#Loguje się na serwer SMTP, używając podanego adresu e-mail i hasła.
+#Przesyła spersonalizowane przypomnienia e-mail do wszystkich członków, którzy nie opłacili składek.
