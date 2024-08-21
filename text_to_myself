@@ -1,0 +1,62 @@
+#Najczęstszą osobą, do której będziesz wysyłać wiadomości tekstowe z programów, jesteś prawdopodobnie Ty sam. Wysyłanie SMS-ów to świetny sposób na przesyłanie sobie powiadomień, gdy jesteś z dala od komputera. Jeśli zautomatyzowałeś nudne zadanie, które zajmuje kilka godzin, możesz ustawić powiadomienie, które powiadomi Cię SMS-em, gdy zadanie się zakończy. Możesz też mieć program działający regularnie, który czasami musi się z Tobą skontaktować, na przykład program sprawdzający pogodę, który przypomina Ci o zabraniu parasola.
+
+#Jako prosty przykład, oto mały program w Pythonie z funkcją textmyself(), która wysyła wiadomość przekazaną jej jako argument w formie ciągu znaków. Otwórz nową kartę edytora i wpisz poniższy kod, zastępując account SID, auth token i numery telefonów swoimi własnymi danymi. Zapisz plik jako textMyself.py.
+
+#! python3
+# textMyself.py - Definiuje funkcję textmyself(), która wysyła wiadomość przekazaną jako ciąg znaków.
+# Wartości wstępne:
+accountSID = 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+authToken = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+myNumber = '+15559998888'
+twilioNumber = '+15552225678'
+
+from twilio.rest import Client
+
+def textmyself(message):
+    twilioCli = Client(accountSID, authToken)
+    twilioCli.messages.create(body=message, from_=twilioNumber, to=myNumber)
+
+
+
+#Jakie są protokoły do wysyłania oraz odbierania e-maili?
+
+#Wysyłanie e-maili: Protokół SMTP (Simple Mail Transfer Protocol).
+#Odbieranie i sprawdzanie e-maili: Protokół IMAP (Internet Message Access Protocol) lub POP3 (Post Office Protocol).
+#Jakie cztery funkcje/metody z modułu smtplib musisz wywołać, aby zalogować się do serwera SMTP?
+
+#smtplib.SMTP()
+#ehlo() lub helo()
+#starttls()
+#login()
+#Jakie dwie funkcje/metody z modułu imapclient musisz wywołać, aby zalogować się do serwera IMAP?
+
+#IMAPClient.login()
+#IMAPClient.select_folder()
+#Jakiego rodzaju argument przekazujesz do imapObj.search()?
+
+#Przekazujesz listę lub ciąg znaków (string) z warunkami wyszukiwania. Przykładem może być [u'UNSEEN'] do wyszukiwania nieprzeczytanych wiadomości.
+#Co zrobić, jeśli Twój kod wyświetla komunikat o błędzie mówiący, że otrzymano więcej niż 10000 bajtów?
+
+#Należy zastosować metodę fetch() z argumentem chunk_size, aby pobierać dane w mniejszych fragmentach. Możesz również zwiększyć limit odbieranych bajtów lub przetwarzać wiadomości w mniejszych partiach.
+#Moduł imapclient obsługuje łączenie się z serwerem IMAP i znajdowanie e-maili. Jaki jest jeden moduł, który obsługuje odczytywanie e-maili, które zebrał imapclient?
+
+#Moduł pyzmail służy do odczytywania e-maili pobranych przez imapclient.
+#Kiedy używasz Gmail API, czym są pliki credentials.json i token.json?
+
+#credentials.json: Plik zawierający dane uwierzytelniające OAuth 2.0 potrzebne do uzyskania dostępu do konta Gmail.
+#token.json: Plik zawierający token dostępu OAuth 2.0, który pozwala aplikacji na dostęp do API bez konieczności ponownego uwierzytelnienia użytkownika.
+#W Gmail API, jaka jest różnica między obiektami „thread” a „message”?
+
+#Thread (wątek): Reprezentuje grupę powiązanych ze sobą wiadomości e-mail, które są częścią jednej konwersacji.
+#Message (wiadomość): Reprezentuje pojedynczy e-mail w tej konwersacji.
+#Jak, korzystając z ezgmail.search(), możesz znaleźć e-maile, które mają załączniki?
+
+#Możesz użyć zapytania w stylu "has:attachment" jako argumentu dla ezgmail.search():
+#python
+#Skopiuj kod
+#ezgmail.search('has:attachment')
+#Jakie trzy informacje musisz uzyskać od Twilio, zanim będziesz mógł wysyłać wiadomości SMS?
+
+#Account SID (unikalny identyfikator konta)
+#Auth Token (token uwierzytelniający)
+#Twilio phone number (numer telefonu przypisany do Twojego konta Twilio, z którego będą wysyłane wiadomości).
