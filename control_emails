@@ -1,0 +1,96 @@
+#Opis projektu:
+#Program ma za zadanie co 15 minut sprawdzać konto e-mail w poszukiwaniu instrukcji do wykonania, które następnie zostaną automatycznie zrealizowane. Na przykład, można wysłać link do pliku torrent, który zostanie pobrany przez program qBittorrent na komputerze domowym. Dodatkowo, aby zapewnić bezpieczeństwo, e-maile powinny zawierać hasło, a po wykonaniu instrukcji program powinien usunąć przetworzony e-mail i wysłać powiadomienie o wykonaniu polecenia.
+
+pip install imaplib2 smtplib email python-dotenv
+
+import imaplib
+import email
+import subprocess
+import time
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import os
+from dotenv import load_dotenv
+
+# Wczytywanie danych logowania z pliku .env
+load_dotenv()
+IMAP_SERVER = 'imap.gmail.com'
+IMAP_PORT = 993
+SMTP_SERVER = 'smtp.gmail.com'
+SMTP_PORT = 587
+EMAIL_ACCOUNT = os.getenv('EMAIL_ACCOUNT')  # Twój adres e-mail
+PASSWORD = os.getenv('PASSWORD')  # Twoje hasło (przechowuj bezpiecznie)
+TRUSTED_SENDER = os.getenv('TRUSTED_SENDER')  # Zaufany nadawca (np. Twój e-mail)
+COMMAND_PASSWORD = os.getenv('COMMAND_PASSWORD')  # Hasło zabezpieczające polecenia
+
+# Funkcja do wysyłania powiadomień
+def send_notification(subject, body):
+    msg = MIMEMultipart()
+    msg['From'] = EMAIL_ACCOUNT
+    msg['To'] = TRUSTED_SENDER
+    msg['Subject'] = subject
+
+    msg.attach(MIMEText(body, 'plain'))
+    server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+    server.starttls()
+    server.login(EMAIL_ACCOUNT, PASSWORD)
+    text = msg.as_string()
+    server.sendmail(EMAIL_ACCOUNT, TRUSTED_SENDER, text)
+    server.quit()
+
+# Funkcja do sprawdzania e-maili i wykonywania poleceń
+def check_email_and_execute():
+    mail = imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT)
+    mail.login(EMAIL_ACCOUNT, PASSWORD)
+    mail.select("inbox")
+
+    status, messages = mail.search(None, "ALL")
+    email_ids = messages[0].split()
+
+    for email_id in email_ids:
+        status, msg_data = mail.fetch(email_id, "(RFC822)")
+        for response_part in msg_data:
+            if isinstance(response_part, tuple):
+                msg = email.message_from_bytes(response_part[1])
+                if msg['From'] == TRUSTED_SENDER:
+                    payload = msg.get_payload(decode=True).decode('utf-8')
+                    if COMMAND_PASSWORD in payload:
+                        # Wyszukiwanie linku do torrentu
+                        if 'torrent' in payload:
+                            torrent_link = payload.split('torrent')[1].strip()
+                            subprocess.Popen(['C:\\Program Files (x86)\\qBittorrent\\qbittorrent.exe', torrent_link])
+                            send_notification('Polecenie wykonane', f'Pobrano plik torrent: {torrent_link}')
+                        # Możesz dodać więcej instrukcji tutaj
+
+                    # Usuwanie przetworzonego e-maila
+                    mail.store(email_id, '+FLAGS', '\\Deleted')
+    mail.expunge()
+    mail.logout()
+
+# Główna pętla programu sprawdzająca e-maile co 15 minut
+while True:
+    check_email_and_execute()
+    time.sleep(900)  # 900 sekund = 15 minut
+
+#Instrukcje:
+#Konfiguracja: Utwórz plik .env w katalogu, w którym znajduje się skrypt, i umieść w nim dane logowania oraz inne informacje:
+
+#plaintext
+#Skopiuj kod
+#0MAIL_ACCOUNT=twoj_email@gmail.com
+#PASSWORD=twoje_haslo
+#TRUSTED_SENDER=zaufany_nadawca@gmail.com
+#COMMAND_PASSWORD=twoje_haslo_do_komend
+#Bezpieczeństwo: Używaj zmiennych środowiskowych, aby przechowywać hasło i inne wrażliwe informacje. Nigdy nie przechowuj ich bezpośrednio w kodzie źródłowym.
+
+#Uruchomienie: Skrypt uruchomi program qBittorrent na Twoim komputerze i zacznie pobierać plik torrent, jeśli otrzyma odpowiedni link w e-mailu.
+
+#Dodatkowe funkcje: Możesz rozszerzyć skrypt o inne polecenia, które chcesz wykonać za pośrednictwem e-maila, np. uruchomienie innych programów czy skryptów.
+
+#Ważne uwagi:
+#Skrypt działa tylko z określonym nadawcą (TRUSTED_SENDER), aby zapewnić bezpieczeństwo.
+#Skrypt usuwa przetworzone e-maile, aby nie powtarzać poleceń.
+#Po zakończeniu pobierania torrentu, możesz dodać dodatkowe funkcje, np. wysłanie powiadomienia o zakończeniu pobierania.
+#Podsumowanie:
+#Ten skrypt jest prostym przykładem na zdalne kontrolowanie komputera za pośrednictwem e-maili. Dzięki temu możesz wykonywać polecenia na swoim komputerze z dowolnego miejsca, mając pewność, że tylko Ty masz do tego dostęp.
