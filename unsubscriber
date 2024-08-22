@@ -1,0 +1,73 @@
+pip install imaplib2 beautifulsoup4
+
+import imaplib
+import email
+from bs4 import BeautifulSoup
+import webbrowser
+
+# Konfiguracja połączenia z serwerem IMAP (np. Gmail)
+IMAP_SERVER = 'imap.gmail.com'
+IMAP_PORT = 993
+EMAIL_ACCOUNT = 'your_email@gmail.com'  # Twój adres e-mail
+PASSWORD = 'your_password'  # Twoje hasło (zachowaj bezpieczeństwo!)
+
+# Logowanie do serwera IMAP
+mail = imaplib.IMAP4_SSL(IMAP_SERVER, IMAP_PORT)
+mail.login(EMAIL_ACCOUNT, PASSWORD)
+mail.select("inbox")
+
+# Wyszukiwanie wszystkich wiadomości e-mail
+status, messages = mail.search(None, "ALL")
+email_ids = messages[0].split()
+
+unsubscribe_links = []
+
+# Przechodzenie przez wszystkie e-maile
+for email_id in email_ids:
+    status, msg_data = mail.fetch(email_id, "(RFC822)")
+    for response_part in msg_data:
+        if isinstance(response_part, tuple):
+            msg = email.message_from_bytes(response_part[1])
+            if msg.is_multipart():
+                for part in msg.walk():
+                    content_type = part.get_content_type()
+                    content_disposition = str(part.get("Content-Disposition"))
+
+                    if "html" in content_type:
+                        html_content = part.get_payload(decode=True)
+                        soup = BeautifulSoup(html_content, "html.parser")
+
+                        # Szukanie linków "unsubscribe"
+                        for link in soup.find_all("a", href=True):
+                            if "unsubscribe" in link.get_text().lower():
+                                unsubscribe_links.append(link['href'])
+            else:
+                content_type = msg.get_content_type()
+
+                if "html" in content_type:
+                    html_content = msg.get_payload(decode=True)
+                    soup = BeautifulSoup(html_content, "html.parser")
+
+                    for link in soup.find_all("a", href=True):
+                        if "unsubscribe" in link.get_text().lower():
+                            unsubscribe_links.append(link['href'])
+
+# Otwarcie wszystkich linków "unsubscribe" w przeglądarce
+for link in unsubscribe_links:
+    print(f"Otwieranie linku: {link}")
+    webbrowser.open(link)
+
+# Zamknięcie połączenia z serwerem IMAP
+mail.logout()
+
+
+#Instrukcje:
+#Konfiguracja e-maila: Upewnij się, że podajesz prawidłowy adres e-mail i hasło. W przypadku Gmaila może być konieczne skonfigurowanie hasła aplikacji (App Password) oraz włączenie dostępu dla mniej bezpiecznych aplikacji w ustawieniach konta Google.
+
+#Wykonanie skryptu: Skrypt automatycznie zaloguje się na Twoje konto e-mail, pobierze wszystkie wiadomości z folderu "inbox", znajdzie linki do anulowania subskrypcji i otworzy je w przeglądarce.
+
+#Bezpieczeństwo: Nie zalecam twardego zakodowania hasła w źródle. Lepiej przechowywać je w pliku konfiguracyjnym lub korzystać z menedżera haseł.
+
+#Ręczne potwierdzenie: Skrypt otworzy linki do anulowania subskrypcji, ale nadal będziesz musiał ręcznie zakończyć proces, klikając odpowiednie przyciski na stronach.
+
+#Ten skrypt znacznie ułatwia proces znajdowania i otwierania linków do anulowania subskrypcji w Twoich e-mailach.
